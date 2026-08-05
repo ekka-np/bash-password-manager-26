@@ -76,15 +76,17 @@ turns silent failures into actionable messages.
 
 ## Aesthetic update
 
-**ASCII startup banner.** Like many Linux/CLI tools, the script now prints a
-small ASCII-art wordmark on launch. It is:
-- **Pure Bash** — raw `printf` art, no `figlet`/`toilet` dependency.
-- **Fast & unobtrusive** — printed once, milliseconds, with a version line.
-- **Optional** — respect `NO_COLOR`, and it never interferes with
-  piped/scripted use.
+**ASCII banners.** Like many Linux/CLI tools, the script prints box-drawing
+ASCII art on launch, after first-time setup, and on exit:
+- **Startup banner** — wordmark + version shown each run.
+- **"EXITING" banner** — printed whenever you leave the script.
+- **"SETUP COMPLETE" wizard** — shown right after the master password is set
+  for the first time.
 
-This gives the tool a sense of character without adding a byte of runtime
-weight.
+All banners are **plain white** (`printf`-only art — no ANSI color, no
+`figlet`/`toilet` dependency) with a blank line before each graphic, so they
+render on any terminal or when piped. They are fast and unobtrusive, adding
+character without runtime weight.
 
 ---
 
@@ -95,7 +97,9 @@ weight.
 - **PBKDF2** key derivation (200,000 iterations) for the vault
 - Guaranteed re-encryption on clean exit **or** Ctrl+C (trap handler)
 - Random selection of the hashing salt
-- ASCII startup banner with version
+- No re-login prompt immediately after first-time setup
+- Fresh setup (new master password) when `vault.enc` is deleted
+- ASCII startup / "EXITING" / "SETUP COMPLETE" banners for the current version
 - Clear error messages; OpenSSL presence check
 
 ## Tools Used
@@ -105,13 +109,16 @@ weight.
 - Linux (Ubuntu, Debian, Fedora, Arch, Manjaro, Kali, macOS)
 
 ## How It Works
-1. On first run, a **salted** master hash is created and stored.
-2. Login (max 3 attempts) verifies against the salted hash.
-3. The vault is decrypted into a plaintext scratch file.
-4. Add / view / change-master-password interactively.
-5. Any exit path — menu `Exit`, Ctrl+C, or signal — re-encrypts the vault and
+1. On first run, a **salted** master hash is created and stored, and the
+   "SETUP COMPLETE" banner is shown — no login prompt for that same session.
+2. On subsequent runs, login (max 3 attempts) verifies against the salted hash.
+3. Deleting `vault.enc` resets to a fresh setup: it re-prompts for a new master
+   password, since the protected data (and its key) has been discarded.
+4. The vault is decrypted into a plaintext scratch file.
+5. Add / view / change-master-password interactively.
+6. Any exit path — menu `Exit`, Ctrl+C, or signal — re-encrypts the vault and
    deletes the plaintext file.
-6. The `.vault.enc` salt/iteration metadata stays alongside the ciphertext.
+7. The `.vault.enc` salt/iteration metadata stays alongside the ciphertext.
 
 ## Installation
 
